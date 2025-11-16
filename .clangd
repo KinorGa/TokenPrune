@@ -1,0 +1,19 @@
+If:
+  PathMatch: [
+    .*\.(c|cpp|h|hpp)
+  ]
+
+CompileFlags:
+  Add: [
+    -std=c++17,
+    -xc++,
+    # -isystemF:/include,
+    # -I/usr/include,
+    # -I/usr/include/c++/11/,
+    # -I/usr/include/x86_64-linux-gnu/,
+    # -I/usr/include/x86_64-linux-gnu/c++/11,
+    -I/root/.local/share/uv/python/cpython-3.10.12-linux-x86_64-gnu/include/python3.10,
+    -I/root/packages/pybind11/include/,
+  ]
+  Compiler: /usr/bin/g++
+  BuiltinHeaders: QueryDriver
