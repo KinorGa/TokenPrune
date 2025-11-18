@@ -15,8 +15,7 @@ from vllm import LLM, SamplingParams
 from parser import extract_Math
 
 tokenizer: Qwen2TokenizerFast = Qwen2TokenizerFast.from_pretrained(
-    # "../concise-reasoning/models/Qwen/Qwen2.5-1.5B-Instruct"
-    "../concise-reasoning/models/trained/augmented/Qwen2.5-1.5B-Instruct/gsm8k/ft_16_shortest/ckpts/checkpoint-37"
+    "../concise-reasoning/models/Qwen/Qwen2.5-1.5B-Instruct"
 )
 qas = []
 with open(file="data/math/math_test.json", mode="r") as f:
@@ -25,6 +24,7 @@ with open(file="data/math/math_test.json", mode="r") as f:
 
 llm = LLM(
     model="../concise-reasoning/models/Qwen/Qwen2.5-1.5B-Instruct",
+    # model="../concise-reasoning/models/trained/augmented/Qwen2.5-1.5B-Instruct/gsm8k/ft_16_shortest/ckpts/checkpoint-37",
     enable_prefix_caching=True,
     dtype="bfloat16",
     tensor_parallel_size=1,
@@ -62,8 +62,13 @@ for qa in qas:
     )
     all_inputs.append(inputs)
 outputs = llm.generate(all_inputs, sampling_params)
+cnt = 0
 for output, qa in zip(outputs, qas):
+    l = len(output.outputs[0].token_ids)
     output = output.outputs[0].text
     real_answer = extract_Math(qa["solution"])
     pred_answer = extract_Math(output)
-    print(f"{real_answer}   {pred_answer}")
+    if "the answer is" in output or "boxed{" in output:
+        cnt += 1
+    print(f"{real_answer}   {pred_answer} ${l - 1}$")
+print(f"{cnt} / {len(qas)}")
