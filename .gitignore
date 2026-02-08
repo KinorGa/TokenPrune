@@ -1,0 +1,6 @@
+*.whl
+
+outputs/
+data/*
+.venv/
+**/__pycache__/

@@ -1,0 +1,4 @@
+name: Qwen3-0.6B-Base
+path: /root/workspace/TokenPrune/models/unsloth/
+# tokenizer: Qwen2Tokenizer
+dtype: bfloat16

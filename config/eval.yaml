@@ -1,0 +1,18 @@
+output_dir: outputs/eval/
+use_checkpoint: true
+checkpoint_path: /root/workspace/proj/TokenPrune/outputs/train/
+num_few_shot: 4
+dataset: data/math/math_test.json
+prompts: data/few_shots_prompts/math/few_shot_gpt4o.json
+use_lora: true
+
+sampler:
+  max_tokens: 512
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 40
+  n_response: 64
+
+defaults:
+  - _self_
+  - models: Qwen2.5-1.5B-Instruct

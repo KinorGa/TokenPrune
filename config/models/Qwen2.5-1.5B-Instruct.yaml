@@ -1,0 +1,4 @@
+name: Qwen2.5-1.5B-Instruct
+path: /root/workspace/concise-reasoning/models/Qwen/
+tokenizer: Qwen2TokenizerFast
+dtype: bfloat16
