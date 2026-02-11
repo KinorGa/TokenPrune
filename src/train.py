@@ -7,12 +7,14 @@
 copyright USTC
 """
 
+import json
 import logging
 from dataclasses import dataclass
+from glob import glob
 
 import hydra
 import torch
-from datasets import Dataset, load_dataset
+from datasets import Dataset
 from omegaconf import DictConfig, ListConfig
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
@@ -140,16 +142,49 @@ def train(cfg: DictConfig):
         full_tokenized["prompt"] = input_text
         return full_tokenized
 
+    def filter_data(data: list[dict]):
+        filtered_maps = dict()
+        for item in data:
+            if item["is_correct"]:
+                if item["idx"] not in filtered_maps:
+                    filtered_maps[item["idx"]] = item
+                else:
+                    # select the shortest item
+                    if (
+                        item["token_length"]
+                        < filtered_maps[item["idx"]]["token_length"]
+                    ):
+                        filtered_maps[item["idx"]] = item
+        # remove list value for items
+        filter_data = []
+        for _, item in filtered_maps.items():
+            del item["prompt_indices"]
+            del item["true_answer"]
+            del item["answer"]
+            filter_data.append(item)
+        return filter_data
+
     # load train dataset
-    train_dataset: Dataset = load_dataset(
-        "json",
-        data_files=f"{cfg['dataset']}/generate/{cfg['models']['name']}/*.jsonl",
-    )["train"]
+    # train_dataset: Dataset = load_dataset(
+    #     "json",
+    #     data_files=f"{cfg['dataset']}/generate/{cfg['models']['name']}/*.json",
+    # )["train"]
+    data_files = glob(f"{cfg['dataset']}/generate/{cfg['models']['name']}/*.json")
+    train_dataset = []
+    for data_file in data_files:
+        with open(file=data_file, mode="r", encoding="utf-8") as f:
+            train_dataset.extend(json.load(f))
+
+    print("Loaded all json files")
+    print(type(train_dataset[0]))
+    train_dataset = filter_data(train_dataset)
+    train_dataset = Dataset.from_list(train_dataset)
+    print(f"Loaded {len(train_dataset)} training samples after filtering.")
     train_dataset = train_dataset.map(
         tokenize, batched=False, num_proc=4, remove_columns=train_dataset.column_names
     )
 
-    train_dataset = train_dataset.shuffle(seed=cfg["seed"]).select(range(150))
+    # train_dataset = train_dataset.shuffle(seed=cfg["seed"]).select(range(150))
 
     # config training arguments
     training_args = TrainingArguments(
