@@ -9,6 +9,7 @@ copyright USTC
 
 import json
 import logging
+import os
 import random
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -190,6 +191,10 @@ def evaluate(cfg: DictConfig):
     # save the results in a json file by timestamp %Y%m%d-%H%M%S
     utc_time = datetime.now(timezone.utc)
     utc_time_str = utc_time.strftime("%Y%m%d-%H%M%S")
+    os.makedirs(
+        f"{cfg['output_dir']}/{cfg['models']['name']}/n{cfg['sampler']['n_response']}",
+        exist_ok=True,
+    )
     with open(
         file=f"{cfg['output_dir']}/{cfg['models']['name']}/n{cfg['sampler']['n_response']}/{sum(any_corrects)}%{len(dataset)}-{utc_time_str}.json",
         mode="w",
