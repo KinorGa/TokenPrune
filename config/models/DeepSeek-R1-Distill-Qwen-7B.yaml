@@ -1,0 +1,4 @@
+name: DeepSeek-R1-Distill-Qwen-7B
+path: /root/autodl-tmp/concise-reasoning/models/deepseek-ai/
+tokenizer: LlamaTokenizerFast
+dtype: bfloat16

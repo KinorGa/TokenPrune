@@ -42,7 +42,7 @@ def evaluate(cfg: DictConfig):
         dtype=cfg["models"].get("dtype", "bfloat16"),
         tensor_parallel_size=1,
         enable_lora=cfg.get("use_lora", False),
-        max_model_len=2048,
+        max_model_len=3072,
     )
     tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
         model_path,
@@ -56,7 +56,8 @@ def evaluate(cfg: DictConfig):
     all_prompts = []
     with open(cfg["prompts"], mode="r") as f:
         for qa in json.load(f):
-            user_content = f"## Question\n{qa['question']}\n## Solution\n"
+            # user_content = f"## Question\n{qa['question']}\n## Solution\n"
+            user_content = format_question_with_prompt(qa["question"], prompt_id=1)
             all_prompts.append({"role": "user", "content": user_content})
             all_prompts.append({"role": "assistant", "content": qa["solution"]})
 
