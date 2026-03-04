@@ -93,6 +93,7 @@ def train(cfg: DictConfig):
         pretrained_model_name_or_path=cfg["models"]["path"] + cfg["models"]["name"],
         dtype=cfg["models"].get("dtype", "bfloat16"),
         attn_implementation="flash_attention_2",
+        device_map="auto",
     )
     tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
         pretrained_model_name_or_path=cfg["models"]["path"] + cfg["models"]["name"],
@@ -202,6 +203,12 @@ def train(cfg: DictConfig):
         bf16=cfg.get("bf16", True),
         fp16=cfg.get("fp16", False),
         report_to=cfg["report_to"],
+        do_train=True,
+        auto_find_batch_size=False,
+        local_rank=cfg.get("local_rank", -1),
+        gradient_checkpointing_kwargs=cfg.get("gradient_checkpointing_kwargs", None),
+        ddp_find_unused_parameters=False,
+        max_steps=cfg.get("max_steps", -1),
     )
 
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)

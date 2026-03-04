@@ -9,12 +9,14 @@ copyright USTC
 
 import json
 import logging
+import multiprocessing
 import os
 import random
 from copy import deepcopy
 from datetime import datetime, timezone
 
 import hydra
+import torch
 from datasets import Dataset
 from omegaconf import DictConfig
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
@@ -31,23 +33,33 @@ log = logging.getLogger(__name__)
 def evaluate(cfg: DictConfig):
     log.info("evaluation cfg: ")
     log.info(cfg)
+    available_gpus = torch.cuda.device_count()
+    tensor_parallel_size = min(cfg.get("tensor_parallel_size", 1), available_gpus)
 
     model_path = cfg["models"]["path"] + "/" + cfg["models"]["name"]
     if cfg.get("use_checkpoint", False):
-        lora_path = cfg["checkpoint_path"] + "/" + cfg["models"]["name"] + "/checkpoint"
+        lora_path = (
+            cfg["checkpoint_path"] + "/" + cfg["models"]["name"] + "/checkpoint-4545"
+        )
 
     llm = LLM(
         model=model_path,
         enable_prefix_caching=True,
         dtype=cfg["models"].get("dtype", "bfloat16"),
-        tensor_parallel_size=1,
+        tensor_parallel_size=tensor_parallel_size,
         enable_lora=cfg.get("use_lora", False),
         max_model_len=3072,
+        load_format=cfg.get("load_format", "safetensors"),
+        enforce_eager=True,
+        disable_custom_all_reduce=True,
     )
     tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
         model_path,
         trust_remote_code=True,
     )
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
     # 加载所有的评测数据
     dataset = Dataset.from_json(cfg["dataset"])
@@ -206,4 +218,8 @@ def evaluate(cfg: DictConfig):
     log.info("Evaluation finished.")
 
 
-evaluate()
+if __name__ == "__main__":
+    multiprocessing.set_start_method("spawn", force=True)
+    torch.multiprocessing.set_start_method("spawn", force=True)
+    torch.cuda.empty_cache()
+    evaluate()
